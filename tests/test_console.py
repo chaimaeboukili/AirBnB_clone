@@ -1,47 +1,121 @@
 #!/usr/bin/python3
-"""Test Console"""
-from models.amenity import Amenity
-from models.base_model import BaseModel
-from models.city import City
-from models.place import Place
-from models.review import Review
-from models.state import State
+"""Tests for the console"""
+
+
+import console
 import unittest
+import os
+import json
+import shutil
+import io
+from contextlib import redirect_stdout
+from models.engine.file_storage import FileStorage
 
 
 class TestConsole(unittest.TestCase):
-    """
-    This test checks if all required classes
-    are created correctly.
-    """
-    def test_class(self):
-        """
-        This test checks if all required classes
-        are present
-        """
-        city1 = City()
-        amenity1 = Amenity()
-        state1 = State()
-        rev1 = Review()
-        place1 = Place()
-        self.assertEqual(city1.__class__.__name__, "City")
-        self.assertEqual(amenity1.__class__.__name__, "Amenity")
-        self.assertEqual(state1.__class__.__name__, "State")
-        self.assertEqual(rev1.__class__.__name__, "Review")
-        self.assertEqual(place1.__class__.__name__, "Place")
+    """Tests for the console"""
 
-    def test_father(self):
-        """
-        This test checks if all required classes
-        inherit correcly from BaseModel
-        """
-        city1 = City()
-        amenity1 = Amenity()
-        state1 = State()
-        rev1 = Review()
-        place1 = Place()
-        self.assertTrue(issubclass(city1.__class__, BaseModel))
-        self.assertTrue(issubclass(amenity1.__class__, BaseModel))
-        self.assertTrue(issubclass(state1.__class__, BaseModel))
-        self.assertTrue(issubclass(rev1.__class__, BaseModel))
-        self.assertTrue(issubclass(place1.__class__, BaseModel))
+    @classmethod
+    def setUp(self):
+        try:
+            os.remove("file.json")
+        except Exception:
+            pass
+
+    def test_all(self):
+        """Test all command without args"""
+        self.maxDiff = None
+        shutil.copy("./tests/allfile.json", "./file.json")
+        teststore = FileStorage()
+        teststore.reload()
+        outbuffer = io.StringIO()
+        f = open("./tests/inalltest.txt", "r")
+        cmdp = console.HBNBCommand(stdin=f, stdout=outbuffer)
+        cmdp.use_rawinput = False
+        cmdp.prompt = ""
+        with redirect_stdout(outbuffer):
+            cmdp.cmdloop()
+        f.close()
+        g = open("./tests/inallresult.txt")
+        self.assertEqual(g.read(), outbuffer.getvalue())
+        g.close()
+        teststore.save()
+        self.assertEqual(json.load("./tests/allfile.json"),
+                         json.load("./file.json"))
+
+    def test_allargs(self):
+        """Test all command with args, such as all BaseModel"""
+        self.maxDiff = None
+        shutil.copy("./tests/allfile.json", "./file.json")
+        teststore = FileStorage()
+        "BaseModel.count()"
+        teststore.reload()
+        outbuffer = io.StringIO()
+        f = open("./tests/inallindtest.txt", "r")
+        cmdp = console.HBNBCommand(stdin=f, stdout=outbuffer)
+        cmdp.use_rawinput = False
+        cmdp.prompt = ""
+        with redirect_stdout(outbuffer):
+            cmdp.cmdloop()
+        f.close()
+        g = open("./tests/inallindresult.txt")
+        self.assertEqual(g.read(), outbuffer.getvalue())
+        g.close()
+        teststore.save()
+        self.assertEqual(json.load("./tests/allfile.json"),
+                         json.load("./file.json"))
+
+    def test_show(self):
+        """Test good show commands"""
+        self.maxDiff = None
+        shutil.copy("./tests/allfile.json", "./file.json")
+        teststore = FileStorage()
+        teststore.reload()
+        outbuffer = io.StringIO()
+        f = open("./tests/inshowtest.txt", "r")
+        cmdp = console.HBNBCommand(stdin=f, stdout=outbuffer)
+        cmdp.use_rawinput = False
+        cmdp.prompt = ""
+        with redirect_stdout(outbuffer):
+            cmdp.cmdloop()
+        f.close()
+        g = open("./tests/inshowresult.txt")
+        self.assertEqual(g.read(), outbuffer.getvalue())
+        g.close()
+        teststore.save()
+        self.assertEqual(json.load("./tests/allfile.json"),
+                         json.load("./file.json"))
+
+    def test_showbad(self):
+        """Test bad show commands"""
+        self.maxDiff = None
+        shutil.copy("./tests/allfile.json", "./file.json")
+        teststore = FileStorage()
+        teststore.reload()
+        outbuffer = io.StringIO()
+        f = open("./tests/inshowbadtest.txt", "r")
+        cmdp = console.HBNBCommand(stdin=f, stdout=outbuffer)
+        cmdp.use_rawinput = False
+        cmdp.prompt = ""
+        with redirect_stdout(outbuffer):
+            cmdp.cmdloop()
+        f.close()
+        g = open("./tests/inshowbadresult.txt")
+        self.assertEqual(g.read(), outbuffer.getvalue())
+        g.close()
+        teststore.save()
+        self.assertEqual(json.load("./tests/allfile.json"),
+                         json.load("./file.json"))
+
+    def test_create(self):
+        """Tests well-behaved create commands. Assumes correct uuid output"""
+        f = open("./tests/increatetest.txt", "r")
+        cmdp = console.HBNBCommand(stdin=f, stdout=outbuffer)
+        cmdp.use_rawinput = False
+        cmdp.prompt = ""
+        with redirect_stdout(outbuffer):
+            cmdp.cmdloop()
+        f.close()
+        ids = outbuffer.getvalue()
+        ids = ids.split("\n")
+        objects = storage.all()
